@@ -1,28 +1,28 @@
-require('dotenv').config();
-
 const express = require("express");
 const nodemailer = require("nodemailer");
 const bodyParser = require("body-parser");
+require('dotenv').config();
 
 const app = express();
 const PORT = 3000;
 
+// Serve static files from the 'public' directory
+app.use(express.static("public"));
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// Test route to check if the server is up
 app.get("/", (req, res) => {
-    res.send("Welcome to the email sending service!");
+    res.sendFile(__dirname + "/public/contact-form.html");  // Serve your HTML form
 });
 
-console.log("Email:", process.env.EMAIL);
-console.log("Password:", process.env.PASSWORD);
-
-// Nodemailer transporter setup with Gmail authentication
+// Nodemailer transporter setup for Gmail
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: process.env.EMAIL,  // Authenticated Gmail address
-        pass: process.env.PASSWORD,  // App password for Gmail
+        user: process.env.EMAIL,
+        pass: process.env.PASSWORD,
     },
 });
 
@@ -32,19 +32,17 @@ app.post("/send-email", async (req, res) => {
 
     try {
         const mailOptions = {
-            from: `${senderEmail} <${process.env.EMAIL}>`,  // Sender's display name with authenticated email
-            replyTo: senderEmail,  // Ensures replies go to the sender's email
+            from: senderEmail,
             to: recipients.split(","),
             subject: subject,
             text: message,
         };
 
-        // Send the email
         await transporter.sendMail(mailOptions);
         res.status(200).send("Email sent successfully!");
     } catch (error) {
         console.error("Error sending email:", error);
-        res.status(500).send(`Failed to send email. Error: ${error.message}`);
+        res.status(500).send("Failed to send email.");
     }
 });
 
